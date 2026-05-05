@@ -26,6 +26,7 @@ class DataSync with ChangeNotifier {
       downloadData();
     }
     LocalFavoritesManager().addListener(onDataChanged);
+    ReadLaterManager().addListener(onDataChanged);
     ComicSourceManager().addListener(onDataChanged);
     if (App.isDesktop) {
       Future.delayed(const Duration(seconds: 1), () {
