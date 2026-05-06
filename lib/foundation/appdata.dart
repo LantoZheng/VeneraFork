@@ -117,6 +117,12 @@ class Appdata with Init {
     "disableSyncFields",
     "deviceId",
     "lastSyncTime",
+    "syncHistory",
+    "syncFavorites",
+    "syncReadLater",
+    "syncCookies",
+    "syncComicSources",
+    "syncSettings",
   ];
 
   /// Sync data from another device

@@ -73,6 +73,8 @@ Future<File> exportAppData([bool sync = true]) async {
   if (await cacheFile.exists()) {
     await cacheFile.delete();
   }
+
+  // Pass all parameters to isolate
   await Isolate.run(() {
     var zipFile = ZipFile.open(cacheFilePath);
 
