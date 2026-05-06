@@ -377,6 +377,14 @@ class _WebdavSettingState extends State<_WebdavSetting> {
   bool isTesting = false;
   bool upload = true;
 
+  // Sync content options
+  bool syncHistory = true;
+  bool syncFavorites = true;
+  bool syncReadLater = true;
+  bool syncCookies = true;
+  bool syncComicSources = true;
+  bool syncSettings = true;
+
   @override
   void initState() {
     super.initState();
@@ -391,6 +399,14 @@ class _WebdavSettingState extends State<_WebdavSetting> {
     user = configs[1];
     pass = configs[2];
     autoSync = appdata.implicitData['webdavAutoSync'] ?? true;
+
+    // Load sync content options
+    syncHistory = appdata.settings['syncHistory'] ?? true;
+    syncFavorites = appdata.settings['syncFavorites'] ?? true;
+    syncReadLater = appdata.settings['syncReadLater'] ?? true;
+    syncCookies = appdata.settings['syncCookies'] ?? true;
+    syncComicSources = appdata.settings['syncComicSources'] ?? true;
+    syncSettings = appdata.settings['syncSettings'] ?? true;
   }
 
   void onAutoSyncChanged(bool value) {
@@ -442,6 +458,72 @@ class _WebdavSettingState extends State<_WebdavSetting> {
               title: Text("Auto Sync Data".tl),
               contentPadding: EdgeInsets.zero,
               trailing: Switch(value: autoSync, onChanged: onAutoSyncChanged),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              "Sync Content".tl,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
+            CheckboxListTile(
+              title: Text("History".tl),
+              contentPadding: EdgeInsets.zero,
+              value: syncHistory,
+              onChanged: (value) {
+                setState(() {
+                  syncHistory = value ?? syncHistory;
+                });
+              },
+            ),
+            CheckboxListTile(
+              title: Text("Favorites".tl),
+              contentPadding: EdgeInsets.zero,
+              value: syncFavorites,
+              onChanged: (value) {
+                setState(() {
+                  syncFavorites = value ?? syncFavorites;
+                });
+              },
+            ),
+            CheckboxListTile(
+              title: Text("Read Later".tl),
+              contentPadding: EdgeInsets.zero,
+              value: syncReadLater,
+              onChanged: (value) {
+                setState(() {
+                  syncReadLater = value ?? syncReadLater;
+                });
+              },
+            ),
+            CheckboxListTile(
+              title: Text("Cookies".tl),
+              contentPadding: EdgeInsets.zero,
+              value: syncCookies,
+              onChanged: (value) {
+                setState(() {
+                  syncCookies = value ?? syncCookies;
+                });
+              },
+            ),
+            CheckboxListTile(
+              title: Text("Comic Sources".tl),
+              contentPadding: EdgeInsets.zero,
+              value: syncComicSources,
+              onChanged: (value) {
+                setState(() {
+                  syncComicSources = value ?? syncComicSources;
+                });
+              },
+            ),
+            CheckboxListTile(
+              title: Text("Settings".tl),
+              contentPadding: EdgeInsets.zero,
+              value: syncSettings,
+              onChanged: (value) {
+                setState(() {
+                  syncSettings = value ?? syncSettings;
+                });
+              },
             ),
             const SizedBox(height: 12),
             RadioGroup<bool>(
@@ -509,6 +591,14 @@ class _WebdavSettingState extends State<_WebdavSetting> {
                   appdata.settings['webdav'] = [url, user, pass];
                   appdata.implicitData['webdavAutoSync'] = autoSync;
                   appdata.writeImplicitData();
+
+                  // Save sync content options
+                  appdata.settings['syncHistory'] = syncHistory;
+                  appdata.settings['syncFavorites'] = syncFavorites;
+                  appdata.settings['syncReadLater'] = syncReadLater;
+                  appdata.settings['syncCookies'] = syncCookies;
+                  appdata.settings['syncComicSources'] = syncComicSources;
+                  appdata.settings['syncSettings'] = syncSettings;
 
                   if (!autoSync) {
                     appdata.saveData();
