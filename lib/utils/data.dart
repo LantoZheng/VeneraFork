@@ -45,11 +45,27 @@ void _cleanWalFiles(String dbPath) {
 Future<File> exportAppData([bool sync = true]) async {
   var dataPath = App.dataPath;
 
+  // Get sync options
+  bool syncHistory = appdata.settings['syncHistory'] ?? true;
+  bool syncFavorites = appdata.settings['syncFavorites'] ?? true;
+  bool syncReadLater = appdata.settings['syncReadLater'] ?? true;
+  bool syncCookies = appdata.settings['syncCookies'] ?? true;
+  bool syncComicSources = appdata.settings['syncComicSources'] ?? true;
+  bool syncSettings = appdata.settings['syncSettings'] ?? true;
+
   // Flush WAL data into main .db files before copying
-  _flushDb(FilePath.join(dataPath, "history.db"));
-  _flushDb(FilePath.join(dataPath, "local_favorite.db"));
-  _flushDb(FilePath.join(dataPath, "read_later.db"));
-  _flushDb(FilePath.join(dataPath, "cookie.db"));
+  if (syncHistory) {
+    _flushDb(FilePath.join(dataPath, "history.db"));
+  }
+  if (syncFavorites) {
+    _flushDb(FilePath.join(dataPath, "local_favorite.db"));
+  }
+  if (syncReadLater) {
+    _flushDb(FilePath.join(dataPath, "read_later.db"));
+  }
+  if (syncCookies) {
+    _flushDb(FilePath.join(dataPath, "cookie.db"));
+  }
 
   var time = DateTime.now().millisecondsSinceEpoch ~/ 1000;
   var cacheFilePath = FilePath.join(App.cachePath, '$time.venera');
@@ -57,28 +73,49 @@ Future<File> exportAppData([bool sync = true]) async {
   if (await cacheFile.exists()) {
     await cacheFile.delete();
   }
+
+  // Pass all parameters to isolate
   await Isolate.run(() {
     var zipFile = ZipFile.open(cacheFilePath);
-    var historyFile = FilePath.join(dataPath, "history.db");
-    var localFavoriteFile = FilePath.join(dataPath, "local_favorite.db");
-    var appdata = FilePath.join(
-      dataPath,
-      sync ? "syncdata.json" : "appdata.json",
-    );
-    var cookies = FilePath.join(dataPath, "cookie.db");
-    zipFile.addFile("history.db", historyFile);
-    zipFile.addFile("local_favorite.db", localFavoriteFile);
-    zipFile.addFile("appdata.json", appdata);
-    zipFile.addFile("cookie.db", cookies);
-    var readLaterFile = FilePath.join(dataPath, "read_later.db");
-    zipFile.addFile("read_later.db", readLaterFile);
-    for (var file in Directory(
-      FilePath.join(dataPath, "comic_source"),
-    ).listSync()) {
-      if (file is File) {
-        zipFile.addFile("comic_source/${file.name}", file.path);
+
+    if (syncHistory) {
+      var historyFile = FilePath.join(dataPath, "history.db");
+      zipFile.addFile("history.db", historyFile);
+    }
+
+    if (syncFavorites) {
+      var localFavoriteFile = FilePath.join(dataPath, "local_favorite.db");
+      zipFile.addFile("local_favorite.db", localFavoriteFile);
+    }
+
+    if (syncSettings) {
+      var appdata = FilePath.join(
+        dataPath,
+        sync ? "syncdata.json" : "appdata.json",
+      );
+      zipFile.addFile("appdata.json", appdata);
+    }
+
+    if (syncCookies) {
+      var cookies = FilePath.join(dataPath, "cookie.db");
+      zipFile.addFile("cookie.db", cookies);
+    }
+
+    if (syncReadLater) {
+      var readLaterFile = FilePath.join(dataPath, "read_later.db");
+      zipFile.addFile("read_later.db", readLaterFile);
+    }
+
+    if (syncComicSources) {
+      for (var file in Directory(
+        FilePath.join(dataPath, "comic_source"),
+      ).listSync()) {
+        if (file is File) {
+          zipFile.addFile("comic_source/${file.name}", file.path);
+        }
       }
     }
+
     zipFile.close();
   });
   return cacheFile;
