@@ -61,9 +61,9 @@ jobs:
       - run: flutter pub get
       - run: flutter build ios --release --no-codesign
       - run: |
-          mkdir -p /Users/runner/work/venera/venera/build/ios/iphoneos/Payload
-          mv /Users/runner/work/venera/venera/build/ios/iphoneos/Runner.app /Users/runner/work/venera/venera/build/ios/iphoneos/Payload
-          cd /Users/runner/work/venera/venera/build/ios/iphoneos/
+          mkdir -p "$GITHUB_WORKSPACE/build/ios/iphoneos/Payload"
+          mv "$GITHUB_WORKSPACE/build/ios/iphoneos/Runner.app" "$GITHUB_WORKSPACE/build/ios/iphoneos/Payload"
+          cd "$GITHUB_WORKSPACE/build/ios/iphoneos/"
           zip -r venera-ios.ipa Payload
       - name: Add version to filename
         run: |
@@ -174,7 +174,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: deb_arm64_build
-          path: build/linux/x64/release/debian # This is a bug related to flutter_to_debian, but it's not a big deal.
+          path: build/linux/**/release/debian
 
   Release:
     runs-on: ubuntu-22.04

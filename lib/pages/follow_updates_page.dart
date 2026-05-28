@@ -21,26 +21,64 @@ class FollowUpdatesWidget extends StatefulWidget {
 class _FollowUpdatesWidgetState
     extends AutomaticGlobalState<FollowUpdatesWidget> {
   int _count = 0;
+  List<FavoriteItemWithUpdateInfo> _updatedComics = [];
 
   String? get folder => appdata.settings["followUpdatesFolder"];
+
+  DateTime? _tryParseUpdateTime(String? raw) {
+    if (raw == null) return null;
+    var normalized = raw.trim();
+    if (normalized.isEmpty) return null;
+    normalized = normalized.replaceAll('/', '-');
+
+    var datePart = normalized.split(RegExp(r'[ T]')).first;
+    var parts = datePart.split('-');
+    if (parts.length >= 3) {
+      var y = int.tryParse(parts[0]);
+      var m = int.tryParse(parts[1]);
+      var d = int.tryParse(parts[2]);
+      if (y != null && m != null && d != null) {
+        return DateTime(y, m, d);
+      }
+    }
+    return DateTime.tryParse(normalized) ?? DateTime.tryParse(datePart);
+  }
+
+  int _compareByUpdateTimeDesc(
+    FavoriteItemWithUpdateInfo a,
+    FavoriteItemWithUpdateInfo b,
+  ) {
+    var at = _tryParseUpdateTime(a.updateTime);
+    var bt = _tryParseUpdateTime(b.updateTime);
+    if (at == null && bt == null) return 0;
+    if (at == null) return 1;
+    if (bt == null) return -1;
+    return bt.compareTo(at);
+  }
 
   void getCount() {
     if (folder == null) {
       _count = 0;
+      _updatedComics = [];
       return;
     }
     if (!LocalFavoritesManager().folderNames.contains(folder)) {
       _count = 0;
+      _updatedComics = [];
       appdata.settings["followUpdatesFolder"] = null;
       Future.microtask(() {
         appdata.saveData();
       });
     } else {
-      _count = LocalFavoritesManager().countUpdates(folder!);
+      var updates = LocalFavoritesManager().getUpdates(folder!);
+      updates.sort(_compareByUpdateTimeDesc);
+      _count = updates.length;
+      _updatedComics = updates.take(20).toList();
     }
   }
 
   void updateCount() {
+    if (!mounted) return;
     setState(() {
       getCount();
     });
@@ -50,6 +88,13 @@ class _FollowUpdatesWidgetState
   void initState() {
     super.initState();
     getCount();
+    LocalFavoritesManager().addListener(updateCount);
+  }
+
+  @override
+  void dispose() {
+    LocalFavoritesManager().removeListener(updateCount);
+    super.dispose();
   }
 
   @override
@@ -57,27 +102,14 @@ class _FollowUpdatesWidgetState
     return SliverToBoxAdapter(
       child: HomeSectionCard(
         title: 'Follow Updates'.tl,
+        count: folder == null ? null : _count,
         onTap: () {
           context.to(() => FollowUpdatesPage());
         },
-        content: _count > 0
-            ? Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpace.lg,
-                  vertical: 2,
-                ),
-                margin: const EdgeInsets.only(
-                  bottom: AppSpace.lg,
-                  left: AppSpace.lg,
-                ),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                  color: context.colorScheme.primaryContainer,
-                ),
-                child: Text(
-                  '@c updates'.tlParams({'c': _count}),
-                  style: ts.s16,
-                ),
+        content: _updatedComics.isNotEmpty
+            ? ComicHorizontalList(
+                comics: _updatedComics,
+                heroTagPrefix: 'follow_updates_',
               )
             : null,
       ),
@@ -446,6 +478,7 @@ class _FollowUpdatesPageState extends AutomaticGlobalState<FollowUpdatesPage> {
       sortComics();
     });
     appdata.saveData();
+    updateFollowUpdatesUI();
   }
 
   void checkNow() async {

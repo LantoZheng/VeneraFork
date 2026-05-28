@@ -1,20 +1,42 @@
 import subprocess
 import os
-import httpx
+import shutil
+import re
 
-file = open('pubspec.yaml', 'r')
-content = file.read()
-file.close()
+with open('pubspec.yaml', 'r') as file:
+    content = file.read()
 
-subprocess.run(["flutter", "build", "windows"], shell=True)
+flutterVersion = ''
+match = re.search(r'^\s*flutter:\s*([0-9.]+)\s*$', content, re.MULTILINE)
+if match:
+    flutterVersion = match.group(1)
+
+if shutil.which("flutter") is None:
+    hint = f"Flutter SDK not found in PATH. Install Flutter {flutterVersion} and retry." if flutterVersion else "Flutter SDK not found in PATH. Install Flutter and retry."
+    raise SystemExit(hint)
+
+try:
+    import httpx
+except ModuleNotFoundError:
+    raise SystemExit("Missing dependency: httpx. Run: pip install httpx")
+
+subprocess.run(["flutter", "build", "windows"], check=True)
 
 if os.path.exists("build/app-windows.zip"):
     os.remove("build/app-windows.zip")
 
 version = str.split(str.split(content, 'version: ')[1], '+')[0]
 
-subprocess.run(["tar", "-a", "-c", "-f", f"build/windows/Venera-{version}-windows.zip", "-C", "build/windows/x64/runner/Release", "*"]
-               , shell=True)
+subprocess.run([
+    "tar",
+    "-a",
+    "-c",
+    "-f",
+    f"build/windows/Venera-{version}-windows.zip",
+    "-C",
+    "build/windows/x64/runner/Release",
+    "*",
+], check=True)
 
 issContent = ""
 file = open('windows/build.iss', 'r')
@@ -34,7 +56,7 @@ if not os.path.exists("windows/ChineseSimplified.isl"):
     with open('windows/ChineseSimplified.isl', 'wb') as file:
         file.write(response.content)
 
-subprocess.run(["iscc", "windows/build.iss"], shell=True)
+subprocess.run(["iscc", "windows/build.iss"], check=True)
 
 with open('windows/build.iss', 'w') as file:
     file.write(issContent)
