@@ -191,4 +191,4 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: deb_arm64_build
-          path: build/linux/x64/release/debian
+          path: build/linux/**/release/debian
