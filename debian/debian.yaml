@@ -1,13 +1,13 @@
 flutter_app: 
   command: venera
-  arch: {{Arch}}
+  arch: x64
   parent: /usr/local/lib
   nonInteractive: true
 
 control:
   Package: venera
-  Version: {{Version}}
-  Architecture: {{Architecture}}
+  Version: 1.11.1
+  Architecture: amd64
   Priority: optional
   Depends: libwebkit2gtk-4.1-0, libgtk-3-0
   Maintainer: haukuen
